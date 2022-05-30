@@ -1,0 +1,62 @@
+*
+  font-family: sans-serif, "Font Awesome 5 Pro Regular"
+
+body
+  background-color: #ff8484
+  margin: 0
+
+section, header
+  background-color: #ffffff
+
+main
+  display: grid
+  height: calc(100vh - 32px * 2)
+  width: calc(100vw - 32px*2)
+  padding: 32px
+  grid-template-columns: calc(33.3% - (24px*2)/3) calc(33.3% - (24px*2)/3) calc(33.3% - (24px*2)/3)
+  grid-template-rows: 120px auto
+  gap: 24px
+  //justify-content: stretch
+  //overflow: hidden
+
+  section
+    height: auto
+
+    h1
+      font-weight: normal
+      margin: 2px 8px 8px 8px
+      border-bottom: black 1px solid
+      line-height: 36px
+
+.header
+  grid-column-start: 1
+  grid-column-end: 4
+  display: flex
+
+  .clock
+    margin-right: 16px
+    font-size: 92px
+
+  .date
+    margin-top: 22px
+    font-size: 24px
+
+    p
+      margin-top: 0
+      margin-bottom: 0
+
+.calendar, .pantry
+  grid-row: span 2
+
+.item
+  display: flex
+  justify-content: space-between
+  background-color: #8cff84
+  margin: 4px 8px 4px 8px
+  font-size: 24px
+
+  span
+    margin: 2px 4px 2px 4px
+
+//.departures, .pad
+//  display: none
