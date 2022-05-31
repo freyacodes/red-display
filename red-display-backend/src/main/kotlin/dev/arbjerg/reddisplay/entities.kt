@@ -7,8 +7,7 @@ data class CalendarEntry(
 )
 
 data class PantryEntry(
-    val name: String,
-    val quantity: Int,
+    var quantity: Int,
     val wanted: Int
 )
 
