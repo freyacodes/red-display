@@ -17,7 +17,13 @@ createApp({
 
 function updateClock() {
     const date = new Date()
-    store.setClock(date.getHours() + ":" + date.getMinutes())
+
+    function pad(n) {
+        if(n.toString().length === 1) return "0" + n
+        else return n
+    }
+
+    store.setClock(pad(date.getHours()) + ":" + pad(date.getMinutes()))
     const dateOfMonth = date.getDate()
 
     let ordinalIndicator
