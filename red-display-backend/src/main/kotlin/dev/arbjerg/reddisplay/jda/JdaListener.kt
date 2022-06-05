@@ -1,6 +1,8 @@
 package dev.arbjerg.reddisplay.jda
 
 import dev.arbjerg.reddisplay.rest.PantryService
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -16,8 +18,16 @@ class JdaListener(private val slashCommands: List<SlashCommand>, private val pan
     private val log: Logger = LoggerFactory.getLogger(JdaListener::class.java)
 
     override fun onGuildReady(event: GuildReadyEvent) {
-        event.guild.updateCommands().addCommands(slashCommands.map { it.commandData }).queue {
-            log.info("Registered ${it.size} commands in " + event.guild.toString())
+        updateGuild(event.guild)
+    }
+
+    override fun onGuildJoin(event: GuildJoinEvent) {
+        updateGuild(event.guild)
+    }
+
+    private fun updateGuild(guild: Guild) {
+        guild.updateCommands().addCommands(slashCommands.map { it.commandData }).queue {
+            log.info("Registered ${it.size} commands in " + guild.toString())
         }
     }
 
@@ -32,9 +42,12 @@ class JdaListener(private val slashCommands: List<SlashCommand>, private val pan
     }
 
     override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) {
-        log.info(event.toString())
-        if (event.interaction.name == "pantry" && event.interaction.focusedOption.name === "name") {
-            val choices = pantry.read().keys.filter { it.startsWith(event.interaction.focusedOption.value) }
+        log.info("Autocomplete: /{}, option:", event.commandPath, event.focusedOption.name)
+        if (event.interaction.name == "pantry" && event.focusedOption.name == "name") {
+            val parsed = pantry.parseName(event.focusedOption.value) ?: return event.replyChoiceStrings().queue()
+            val choices = pantry.read().keys.filter {
+                it.startsWith(parsed)
+            }
             event.replyChoiceStrings(choices).queue()
         } else error("Can't autocomplete for ${event.interaction.name}")
     }

@@ -100,7 +100,7 @@ class PantryService {
     }
 
     private fun pantryAdd(event: SlashCommandInteraction) {
-        val name = event.getOption("name")!!.asString.parseName()
+        val name = event.getOption("name")!!.asString.parse()
             ?: return event.reply("Invalid name").setEphemeral(true).queue()
 
         val pantry = read()
@@ -155,7 +155,7 @@ class PantryService {
     }
 
     private fun parseAndCheckExists(event: SlashCommandInteraction, name: String): String? {
-        val parsed = name.parseName()
+        val parsed = name.parse()
         if (parsed == null) {
             event.reply("Invalid name").setEphemeral(true).queue()
             return null
@@ -169,7 +169,9 @@ class PantryService {
         return parsed
     }
 
-    private fun String.parseName(): String? {
+    fun parseName(name: String): String? = name.parse()
+
+    private fun String.parse(): String? {
         val name = this.lowercase().replace(" ", "-")
 
         if (name.contains(Regex.fromLiteral("^[\\W-]")) || name.startsWith("-") || name.endsWith("-")) {
