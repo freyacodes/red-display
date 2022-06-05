@@ -17,13 +17,15 @@ class PantryService {
     private val file = File("pantry.json")
 
     @PostMapping("/pantry/increment/{item}")
-    fun increment(@PathVariable item: String) {
+    fun increment(@PathVariable item: String): Map<String, PantryEntry> {
         update(item, 1)
+        return read()
     }
 
     @PostMapping("/pantry/decrement/{item}")
-    fun decrement(@PathVariable item: String) {
+    fun decrement(@PathVariable item: String): Map<String, PantryEntry> {
         update(item, -1)
+        return read()
     }
 
     private fun update(item: String, delta: Int) {
@@ -33,7 +35,7 @@ class PantryService {
         }
     }
 
-    @GetMapping("/pantry/get")
+    @GetMapping("/pantry")
     fun read(): Map<String, PantryEntry> {
         val type = object : TypeToken<HashMap<String, PantryEntry>>() {}.type
         return gson.fromJson(file.reader(), type)
@@ -41,7 +43,7 @@ class PantryService {
 
     @Synchronized
     private fun write(transform: Map<String, PantryEntry>.() -> Unit) {
-        val json = gson.toJson(transform(read()))
+        val json = gson.toJson(read().apply(transform))
         file.writeText(json)
     }
 

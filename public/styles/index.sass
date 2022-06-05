@@ -1,9 +1,7 @@
-*
-  font-family: sans-serif, "Font Awesome 5 Pro Regular"
+@use "common"
 
 body
   background-color: #ff8484
-  margin: 0
 
 section, header
   background-color: #ffffff
@@ -21,12 +19,6 @@ main
 
   section
     height: auto
-
-    h1
-      font-weight: normal
-      margin: 2px 8px 8px 8px
-      border-bottom: black 1px solid
-      line-height: 36px
 
 .header
   grid-column-start: 1
@@ -47,16 +39,6 @@ main
 
 .calendar, .pantry
   grid-row: span 2
-
-.item
-  display: flex
-  justify-content: space-between
-  background-color: #8cff84
-  margin: 4px 8px 4px 8px
-  font-size: 24px
-
-  span
-    margin: 2px 4px 2px 4px
 
 //.departures, .pad
 //  display: none
