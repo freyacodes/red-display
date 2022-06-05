@@ -8,7 +8,7 @@ data class CalendarEntry(
 
 data class PantryEntry(
     var quantity: Int,
-    val wanted: Int
+    var wanted: Int
 )
 
 data class DepartureBoard(

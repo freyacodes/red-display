@@ -4,6 +4,8 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import dev.arbjerg.reddisplay.jda.SlashCommand
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER
+import net.dv8tion.jda.api.interactions.commands.OptionType.STRING
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.internal.interactions.CommandDataImpl
@@ -48,20 +50,34 @@ class PantryService {
     }
 
     @Synchronized
-    fun write(transform: Map<String, PantryEntry>.() -> Unit) {
-        val json = gson.toJson(read().apply(transform))
+    fun write(transform: MutableMap<String, PantryEntry>.() -> Unit): Map<String, PantryEntry> {
+        val data = read().toMutableMap().apply(transform)
+        val json = gson.toJson(data)
         file.writeText(json)
+        return data
     }
 
     @Bean
     fun pantryCommand() = SlashCommand(
-        CommandDataImpl("pantry", "Manage Rød Stue's pantry database")
-            .addSubcommands(
-                SubcommandData("list", "List what's in the pantry")
-            )
+        CommandDataImpl("pantry", "Manage Rød Stue's pantry database").addSubcommands(
+            SubcommandData("list", "List what's in the pantry"),
+            SubcommandData("add", "Add a new type of item to the pantry")
+                .addOption(STRING, "name", "Name of the new item", true)
+                .addOption(INTEGER, "wanted", "How many units to keep stocked", true),
+            SubcommandData("remove", "Remove a type of item")
+                .addOption(STRING, "name", "Name of the item to remove", true),
+            SubcommandData("set", "Set item quantity")
+                .addOption(STRING, "name", "The item to set the quantity of", true)
+                .addOption(INTEGER, "quantity", "The new quantity of the item", true)
+                .addOption(INTEGER, "wanted", "The desired quantity", false)
+
+        )
     ) { event ->
-        when(event.subcommandName) {
+        when (event.subcommandName) {
             "list" -> pantryList(event)
+            "add" -> pantryAdd(event)
+            "remove" -> pantryRemove(event)
+            "set" -> pantrySet(event)
             else -> error("Unknown command ${event.commandPath}")
         }
     }
@@ -83,4 +99,82 @@ class PantryService {
         event.replyEmbeds(embed).queue()
     }
 
+    private fun pantryAdd(event: SlashCommandInteraction) {
+        val name = event.getOption("name")!!.asString.parseName()
+            ?: return event.reply("Invalid name").setEphemeral(true).queue()
+
+        val pantry = read()
+        if (pantry.containsKey(name)) {
+            event.reply("`$name` already exists").setEphemeral(true).queue()
+            return
+        }
+
+        val wanted = event.getOption("wanted")!!.asInt
+        if (wanted < 1) {
+            event.reply("Desired quantity must be at least 1").setEphemeral(true).queue()
+            return
+        }
+
+        write {
+            this[name] = PantryEntry(0, wanted)
+        }
+        event.reply("Added `$name` with desired quantity `$wanted`").queue()
+    }
+
+    private fun pantryRemove(event: SlashCommandInteraction) {
+        val name = parseAndCheckExists(event, event.getOption("name")!!.asString) ?: return
+        write {
+            remove(name)
+        }
+        event.reply("Removed `$name`").queue()
+    }
+
+    private fun pantrySet(event: SlashCommandInteraction) {
+        val name = parseAndCheckExists(event, event.getOption("name")!!.asString) ?: return
+        val quantity = event.getOption("quantity")!!.asInt
+        val wanted = event.getOption("wanted")?.asInt
+
+        if (quantity < 0) {
+            event.reply("Quantity must be at least 0").setEphemeral(true).queue()
+            return
+        }
+
+        if (wanted != null && wanted < 1) {
+            event.reply("Desired quantity must be at least 1").setEphemeral(true).queue()
+            return
+        }
+
+        val storedItem = write {
+            this[name]!!.apply {
+                this.quantity = quantity
+                this.wanted = wanted ?: this.wanted
+            }
+        }[name]!!
+
+        event.reply("`$name` set to `${storedItem.quantity}/${storedItem.wanted}`").queue()
+    }
+
+    private fun parseAndCheckExists(event: SlashCommandInteraction, name: String): String? {
+        val parsed = name.parseName()
+        if (parsed == null) {
+            event.reply("Invalid name").setEphemeral(true).queue()
+            return null
+        }
+
+        val pantry = read()
+        if(!pantry.containsKey(parsed)) {
+            event.reply("`$parsed` does not exist").setEphemeral(true).queue()
+            return null
+        }
+        return parsed
+    }
+
+    private fun String.parseName(): String? {
+        val name = this.lowercase().replace(" ", "-")
+
+        if (name.contains(Regex.fromLiteral("^[\\W-]")) || name.startsWith("-") || name.endsWith("-")) {
+            return null
+        }
+        return name
+    }
 }

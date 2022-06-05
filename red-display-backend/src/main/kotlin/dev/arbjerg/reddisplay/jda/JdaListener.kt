@@ -21,7 +21,12 @@ class JdaListener(private val slashCommands: List<SlashCommand>) : ListenerAdapt
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         log.info("Invocation: /${event.commandPath.replace("/", " ")}")
-        commands[event.name]!!.handler(event)
+        try {
+            commands[event.name]!!.handler(event)
+        } catch (e: Exception) {
+            event.reply("Error: " + e.message)
+            throw e
+        }
     }
 
 }
