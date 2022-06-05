@@ -1,4 +1,4 @@
-package dev.arbjerg.reddisplay
+package dev.arbjerg.reddisplay.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

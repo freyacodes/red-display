@@ -1,4 +1,4 @@
-package dev.arbjerg.reddisplay
+package dev.arbjerg.reddisplay.rest
 
 data class CalendarEntry(
     val name: String,

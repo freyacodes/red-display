@@ -1,7 +1,13 @@
-package dev.arbjerg.reddisplay
+package dev.arbjerg.reddisplay.rest
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import dev.arbjerg.reddisplay.jda.SlashCommand
+import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import net.dv8tion.jda.internal.interactions.CommandDataImpl
+import org.springframework.context.annotation.Bean
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -42,9 +48,39 @@ class PantryService {
     }
 
     @Synchronized
-    private fun write(transform: Map<String, PantryEntry>.() -> Unit) {
+    fun write(transform: Map<String, PantryEntry>.() -> Unit) {
         val json = gson.toJson(read().apply(transform))
         file.writeText(json)
+    }
+
+    @Bean
+    fun pantryCommand() = SlashCommand(
+        CommandDataImpl("pantry", "Manage Rød Stue's pantry database")
+            .addSubcommands(
+                SubcommandData("list", "List what's in the pantry")
+            )
+    ) { event ->
+        when(event.subcommandName) {
+            "list" -> pantryList(event)
+            else -> error("Unknown command ${event.commandPath}")
+        }
+    }
+
+    private fun pantryList(event: SlashCommandInteraction) {
+        val pantry = read()
+        val embed = EmbedBuilder().apply {
+            setTitle("Pantry")
+            val left = mutableListOf<String>()
+            val right = mutableListOf<String>()
+            pantry.forEach { (name, pantry) ->
+                left.add(name)
+                right.add(pantry.quantity.toString() + "/" + pantry.wanted)
+            }
+            addField("Item", left.joinToString("\n"), true)
+            addField("Quantity", right.joinToString("\n"), true)
+        }.build()
+
+        event.replyEmbeds(embed).queue()
     }
 
 }
