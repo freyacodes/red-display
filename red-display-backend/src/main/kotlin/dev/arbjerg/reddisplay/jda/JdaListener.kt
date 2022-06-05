@@ -1,6 +1,8 @@
 package dev.arbjerg.reddisplay.jda
 
+import dev.arbjerg.reddisplay.rest.PantryService
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.slf4j.Logger
@@ -8,7 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class JdaListener(private val slashCommands: List<SlashCommand>) : ListenerAdapter() {
+class JdaListener(private val slashCommands: List<SlashCommand>, private val pantry: PantryService) : ListenerAdapter() {
 
     val commands = slashCommands.associateBy { it.commandData.name }
     private val log: Logger = LoggerFactory.getLogger(JdaListener::class.java)
@@ -27,6 +29,14 @@ class JdaListener(private val slashCommands: List<SlashCommand>) : ListenerAdapt
             event.reply("Error: " + e.message)
             throw e
         }
+    }
+
+    override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) {
+        log.info(event.toString())
+        if (event.interaction.name == "pantry" && event.interaction.focusedOption.name === "name") {
+            val choices = pantry.read().keys.filter { it.startsWith(event.interaction.focusedOption.value) }
+            event.replyChoiceStrings(choices).queue()
+        } else error("Can't autocomplete for ${event.interaction.name}")
     }
 
 }

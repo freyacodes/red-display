@@ -65,9 +65,9 @@ class PantryService {
                 .addOption(STRING, "name", "Name of the new item", true)
                 .addOption(INTEGER, "wanted", "How many units to keep stocked", true),
             SubcommandData("remove", "Remove a type of item")
-                .addOption(STRING, "name", "Name of the item to remove", true),
+                .addOption(STRING, "name", "Name of the item to remove", true, true),
             SubcommandData("set", "Set item quantity")
-                .addOption(STRING, "name", "The item to set the quantity of", true)
+                .addOption(STRING, "name", "The item to set the quantity of", true, true)
                 .addOption(INTEGER, "quantity", "The new quantity of the item", true)
                 .addOption(INTEGER, "wanted", "The desired quantity", false)
 
